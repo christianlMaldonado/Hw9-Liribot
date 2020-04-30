@@ -1,168 +1,184 @@
-require("dotenv").config();
-var fs = require("fs");
+//-------------------VARIABLES----------------------------------------------------
+
+//Loading modules
+var Twitter = require('twitter');
+var spotify = require('spotify');
+var request = require('request');
+var fs = require('fs');
 var keys = require("./keys.js");
-var request = require("request");
-var Spotify = require("node-spotify-api");
-var spotify = new Spotify(keys.spotify);
+var tweetsArray = [];
+var inputCommand = process.argv[2];
+var commandParam = process.argv[3];
+var defaultMovie = "Ex Machina";
+var defaultSong = "Radioactive";
 
-var action = process.argv[2];
-var parameter = process.argv[3];
 
-function switchCase() {
-  switch (action) {
-    case "concert-this":
-      bandsInTown(parameter);
-      break;
 
-    case "spotify-this-song":
-      spotSong(parameter);
-      break;
+var twitterKeys = keys.twitterKeys;
+var tmdbKey = keys.tmdbKey;
 
-    case "movie-this":
-      movieInfo(parameter);
-      break;
+var client = new Twitter({
+consumer_key: twitterKeys.consumer_key,
+consumer_secret: twitterKeys.consumer_secret,
+access_token_key: twitterKeys.access_token_key,
+access_token_secret: twitterKeys.access_token_secret
+});
 
-    case "do-what-it-says":
-      getRandom();
-      break;
+//-----------------------FUNCTIONS-----------------------------------------------
 
-    default:
-      logIt("Invalid Instruction");
-      break;
-  }
+//This function processes the input commands
+function processCommands(command, commandParam){
+
+	//console.log(commandParam);
+
+	switch(command){
+
+	case 'my-tweets':
+		getMyTweets(); break;
+	case 'spotify-this-song':
+		//If user has not specified a song , use default
+		if(commandParam === undefined){
+			commandParam = defaultSong;
+		}     
+		spotifyThis(commandParam); break;
+	case 'movie-this':
+		//If user has not specified a movie Name , use default
+		if(commandParam === undefined){
+			commandParam = defaultMovie;
+		}    
+		movieThis(commandParam); break;
+	case 'do-what-it-says':
+		doWhatItSays(); break;
+	default: 
+		console.log("Invalid command. Please type any of the following commnds: my-tweets spotify-this-song movie-this or do-what-it-says");
 }
 
-function bandsInTown(parameter) {
-if (action === "concert-this") {
-    var movieName = "";
-    for (var i = 3; i < process.argv.length; i++) {
-    movieName += process.argv[i];
-    }
-    console.log(movieName);
-} else {
-    movieName = parameter;
+
 }
 
-  var queryUrl =
-    "https://rest.bandsintown.com/artists/" +
-    movieName +
-    "/events?app_id=ee388fbe45944a2e54ad668916eaac75";
+function getMyTweets(){
 
-  request(queryUrl, function (error, response, body) {
-    if (!error && response.statusCode === 200) {
-      var JS = JSON.parse(body);
-      for (i = 0; i < JS.length; i++) {
-        var dTime = JS[i].datetime;
-        var month = dTime.substring(5, 7);
-        var year = dTime.substring(0, 4);
-        var day = dTime.substring(8, 10);
-        var dateForm = month + "/" + day + "/" + year;
+	var params = {screen_name: 'jincygeorge8388', count: 20, exclude_replies:true, trim_user:true};
+		client.get('statuses/user_timeline', params, function(error, tweets, response) {
+				if (!error) {
+					//console.log(tweets);
+					tweetsArray = tweets;
 
-        logIt("\n---------------------------------------------------\n");
+					for(i=0; i<tweetsArray.length; i++){
+						console.log("Created at: " + tweetsArray[i].created_at);
+						console.log("Text: " + tweetsArray[i].text);
+						console.log('--------------------------------------');
+					}
+				}
+				else{
+					console.log(error);
+				}
+	});
 
-        logIt("Date: " + dateForm);
-        logIt("Name: " + JS[i].venue.name);
-        logIt("City: " + JS[i].venue.city);
-        if (JS[i].venue.region !== "") {
-          logIt("Country: " + JS[i].venue.region);
-        }
-        logIt("Country: " + JS[i].venue.country);
-        logIt("\n---------------------------------------------------\n");
-      }
-    }
-  });
 }
-function spotSong(parameter) {
-  var searchTrack;
-  if (parameter === undefined) {
-    searchTrack = "The Sign ace of base";
-  } else {
-    searchTrack = parameter;
-  }
 
-  spotify.search(
-    {
-      type: "track",
-      query: searchTrack,
-    },
-    function (error, data) {
-      if (error) {
-        logIt("Error occurred: " + error);
+function spotifyThis(song){
+
+	//If user has not specified a song , default to "Radioactive" imagine dragons
+	if(song === ""){
+		song = "Radioactive";
+	}
+
+	spotify.search({ type: 'track', query: song}, function(err, data) {
+    if (err) {
+        console.log('Error occurred: ' + err);
         return;
-      } else {
-        logIt("\n---------------------------------------------------\n");
-        logIt("Artist: " + data.tracks.items[0].artists[0].name);
-        logIt("Song: " + data.tracks.items[0].name);
-        logIt("Preview: " + data.tracks.items[3].preview_url);
-        logIt("Album: " + data.tracks.items[0].album.name);
-        logIt("\n---------------------------------------------------\n");
-      }
-    }
-  );
-}
-function movieInfo(parameter) {
-  var findMovie;
-  if (parameter === undefined) {
-    findMovie = "Mr. Nobody";
-  } else {
-    findMovie = parameter;
-  }
-
-  var queryUrl =
-    "http://www.omdbapi.com/?i=" + findMovie + "tt3896198&apikey=d9209737";
-
-  request(queryUrl, function (err, res, body) {
-    var bodyOf = JSON.parse(body);
-    if (!err && res.statusCode === 200) {
-      logIt("\n---------------------------------------------------\n");
-      logIt("Title: " + bodyOf.Title);
-      logIt("Release Year: " + bodyOf.Year);
-      logIt("IMDB Rating: " + bodyOf.imdbRating);
-      logIt("Rotten Tomatoes Rating: " + bodyOf.Ratings[1].Value);
-      logIt("Country: " + bodyOf.Country);
-      logIt("Language: " + bodyOf.Language);
-      logIt("Plot: " + bodyOf.Plot);
-      logIt("Actors: " + bodyOf.Actors);
-      logIt("\n---------------------------------------------------\n");
-    }
-  });
-}
-
-function getRandom() {
-  fs.readFile("random.txt", "utf8", function (error, data) {
-    if (error) {
-      return logIt(error);
     }
 
-    var dataArr = data.split(",");
-
-    if (dataArr[0] === "spotify-this-song") {
-      var songcheck = dataArr[1].trim().slice(1, -1);
-      spotSong(songcheck);
-    } else if (dataArr[0] === "concert-this") {
-      if (dataArr[1].charAt(1) === "'") {
-        var dLength = dataArr[1].length - 1;
-        var data = dataArr[1].substring(2, dLength);
-        console.log(data);
-        bandsInTown(data);
-      } else {
-        var bandName = dataArr[1].trim();
-        console.log(bandName);
-        bandsInTown(bandName);
-      }
-    } else if (dataArr[0] === "movie-this") {
-      var movie_name = dataArr[1].trim().slice(1, -1);
-      movieInfo(movie_name);
+    var song = data.tracks.items[0];
+    console.log("------Artists-----");
+    for(i=0; i<song.artists.length; i++){
+    console.log(song.artists[i].name);
     }
-  });
+
+    console.log("------Song Name-----");
+    console.log(song.name);
+
+	console.log("-------Preview Link-----");
+    console.log(song.preview_url);
+
+    console.log("-------Album-----");
+    console.log(song.album.name);
+
+	});
+
 }
 
-function logIt(dataToLog) {
-  console.log(dataToLog);
+function movieThis(movieName){
 
-  fs.appendFile("log.txt", dataToLog + "\n", function (err) {
-    if (err) return logIt("Error logging data to file: " + err);
-  });
+	console.log(movieName);
+
+	request("https://api.themoviedb.org/3/search/movie?api_key=" + tmdbKey + "&query=" + movieName, function(error, response, body) {
+
+  	// If there were no errors and the response code was 200 (i.e. the request was successful)...
+	if (!error && response.statusCode === 200) {
+
+	    //console.log(JSON.parse(body));
+
+	    //Get the Movie ID
+		var movieID =  JSON.parse(body).results[0].id;
+	    //console.log(movieID);
+
+	    //Create new query using the movie ID
+		var queryURL = "https://api.themoviedb.org/3/movie/" + movieID + "?api_key=" + tmdbKey + "&append_to_response=credits,releases";
+
+		request(queryURL, function(error, response, body) {
+			var movieObj = JSON.parse(body);
+
+			console.log("--------Title-----------");
+			console.log(movieObj.original_title);
+
+			console.log("--------Year -----------");
+			console.log(movieObj.release_date.substring(0,4));
+
+			console.log("--------Rating-----------");
+			console.log(movieObj.releases.countries[0].certification);
+
+			console.log("--------Country Produced-----------");
+			for(i=0, j = movieObj.production_countries.length; i<j; i++){
+				console.log(movieObj.production_countries[i].name);
+			}
+			console.log("--------Languages-----------");
+			for(i=0, j = movieObj.spoken_languages.length; i<j; i++){
+				console.log(movieObj.spoken_languages[i].name);
+			}
+			console.log("--------Plot----------------");
+			console.log(movieObj.overview);
+
+			console.log("--------Actors-----------");
+			for(i=0, j = movieObj.credits.cast.length; i<j; i++){
+				console.log(movieObj.credits.cast[i].name);
+			}
+		});
+
+
+	}else{
+		console.log(error);
+	}
+
+	});
 }
 
-switchCase();
+function doWhatItSays(){
+	fs.readFile('random.txt', 'utf8', function(err, data){
+
+		if (err){ 
+			return console.log(err);
+		}
+
+		var dataArr = data.split(',');
+
+		processCommands(dataArr[0], dataArr[1]);
+	});
+}
+
+
+
+//-------------------------MAIN PROCESS-------------------------------------------
+
+processCommands(inputCommand, commandParam);

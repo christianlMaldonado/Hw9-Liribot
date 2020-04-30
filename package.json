@@ -1,23 +1,26 @@
 {
-  "name": "Hw9-Liribot",
-  "version": "1.0.0",
-  "description": "In this assignment, you will make LIRI. LIRI is like iPhone's SIRI. However, while SIRI is a Speech Interpretation and Recognition Interface, LIRI is a Language Interpretation and Recognition Interface. LIRI will be a command line node app that takes in parameters and gives you back data.",
-  "main": "keys.js",
+  "name": "liribot-node-app",
+  "version": "0.1.0",
+  "description": "LIRI is a Language Interpretation and Recognition Interface.",
+  "main": "liri.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/christianlMaldonado/Hw9-Liribot.git"
+    "url": "git+https://github.com/georgejincy/LIRI-Bot.git"
   },
-  "keywords": [],
-  "author": "",
+  "author": "Jincy George",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/christianlMaldonado/Hw9-Liribot/issues"
+    "url": "https://github.com/georgejincy/LIRI-Bot/issues"
   },
-  "homepage": "https://github.com/christianlMaldonado/Hw9-Liribot#readme",
+  "homepage": "https://github.com/georgejincy/LIRI-Bot#readme",
   "dependencies": {
-    "dotenv": "^8.2.0"
+    "dotenv": "^8.2.0",
+    "request": "^2.88.2",
+    "spotify": "^0.3.0",
+    "spotify-web-api-node": "^4.0.0",
+    "twitter": "^1.7.1"
   }
 }
