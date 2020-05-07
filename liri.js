@@ -96,6 +96,8 @@ function spotifyThis(song){
     console.log(song.artists[i].name);
     }
 
+	console.log(data);
+
     console.log("------Song Name-----");
     console.log(song.name);
 
